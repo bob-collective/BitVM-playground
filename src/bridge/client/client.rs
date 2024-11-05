@@ -641,7 +641,7 @@ impl BitVMClient {
     pub async fn process_peg_in_as_verifier(&mut self, peg_in_graph: &PegInGraph) {
         if let Some(ref context) = self.verifier_context {
             let status = peg_in_graph.verifier_status(&self.esplora, Some(&context)).await;
-            println!("Status: {}", status);
+
             match status {
                 PegInVerifierStatus::PendingOurNonces => {
                     println!("Pusing nonce");

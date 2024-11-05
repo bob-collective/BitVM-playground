@@ -187,8 +187,6 @@ impl PegInConfirmTransaction {
         let secret_nonce = push_nonce(self, context, input_index);
         secret_nonces.insert(input_index, secret_nonce);
 
-        println!("Pusing nonce for {}", context.verifier_public_key);
-        
         secret_nonces
     }
 
