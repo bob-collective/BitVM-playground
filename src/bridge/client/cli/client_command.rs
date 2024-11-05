@@ -73,32 +73,8 @@ impl ClientCommand {
         loop {
             self.client.sync().await;
 
-            let peg_in_graphs = self.client.get_data().peg_in_graphs.clone();
 
-            for peg_in_graph in peg_in_graphs.iter() {
-                let status = peg_in_graph.depositor_status(&self.client.esplora).await;
-
-                self.client.pre_sign_peg_in(peg_in_graph.id());
-                match status {
-                    PegInDepositorStatus::PegInDepositWait => {
-                        self.client
-                            .broadcast_peg_in_deposit(peg_in_graph.id())
-                            .await
-                    }
-                    PegInDepositorStatus::PegInConfirmWait => {
-                        self.client
-                            .broadcast_peg_in_confirm(peg_in_graph.id())
-                            .await
-                    }
-                    _ => {
-                        println!(
-                            "Peg-in graph {} is in status: {}",
-                            peg_in_graph.id(),
-                            status
-                        );
-                    }
-                }
-            }
+            
 
             let peg_out_graphs = self.client.get_data().peg_out_graphs.clone();
             for peg_out_graph in peg_out_graphs.iter() {
