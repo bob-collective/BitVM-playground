@@ -72,19 +72,19 @@ pub enum PegInVerifierStatus {
 impl Display for PegInVerifierStatus {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         match self {
-            PegInVerifierStatus::AwaitingDeposit => write!(f, "Waiting for deposit transaction..."),
+            PegInVerifierStatus::AwaitingDeposit => write!(f, "Peg-in deposit transaction not confirmed yet. Wait..."),
             PegInVerifierStatus::ReadyToSubmit => {
-                write!(f, "Peg-in pre-signed, confirm transaction ready.")
+                write!(f, "Peg-in confirm transaction pre-signed. Broadcast confirm transaction?")
             }
-            PegInVerifierStatus::PendingOurNonces => write!(f, "Peg-in pending our nonces."),
+            PegInVerifierStatus::PendingOurNonces => write!(f, "Nonce required. Share peg-in confirm nonce?"),
             PegInVerifierStatus::AwaitingNonces => {
-                write!(f, "Peg-in pending verifier nonces.")
+                write!(f, "Awaiting peg-in confirm nonces. Wait...")
             }
             PegInVerifierStatus::PendingOurSignature => {
-                write!(f, "Peg-in pending our signature.")
+                write!(f, "Signature required. Pre-sign peg-in confirm transaction?")
             }
             PegInVerifierStatus::AwaitingSignatures => {
-                write!(f, "Peg-in pending verifier signatures.")
+                write!(f, "Awaiting peg-in confirm signatures. Wait...")
             }
             PegInVerifierStatus::Complete => write!(f, "Peg-in done."),
         }
