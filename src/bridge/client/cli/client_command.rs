@@ -3,7 +3,6 @@ use crate::bridge::client::client::BitVMClient;
 use crate::bridge::constants::DestinationNetwork;
 use crate::bridge::contexts::base::generate_keys_from_secret;
 use crate::bridge::graphs::base::{VERIFIER_0_SECRET, VERIFIER_1_SECRET};
-use crate::bridge::superblock::{find_superblock, get_superblock_message};
 use bitcoin::Network;
 use bitcoin::PublicKey;
 use clap::{arg, ArgMatches, Command};
@@ -74,7 +73,6 @@ impl ClientCommand {
             self.client.process_peg_ins().await;
             self.client.process_peg_outs().await;
 
-            self.client.sync().await;
             self.client.flush().await;
         }
     }
@@ -121,12 +119,7 @@ impl ClientCommand {
             Some(("confirm", _)) => self.client.broadcast_peg_in_confirm(graph_id).await,
             Some(("peg_out_confirm", _)) => self.client.broadcast_peg_out_confirm(graph_id).await,
             Some(("kick_off_1", _)) => self.client.broadcast_kick_off_1(graph_id).await,
-            Some(("kick_off_2", _)) => {
-                let (sb, sb_hash) = find_superblock();
-                self.client
-                    .broadcast_kick_off_2(graph_id, &get_superblock_message(&sb, &sb_hash))
-                    .await
-            }
+            Some(("kick_off_2", _)) => self.client.broadcast_kick_off_2(graph_id).await,
             Some(("start_time", _)) => self.client.broadcast_start_time(graph_id).await,
             Some(("assert", _)) => self.client.broadcast_assert(graph_id).await,
             Some(("take_1", _)) => self.client.broadcast_take_1(graph_id).await,

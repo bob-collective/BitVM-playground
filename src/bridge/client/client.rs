@@ -15,7 +15,6 @@ use crate::bridge::{
     constants::DestinationNetwork,
     contexts::base::generate_n_of_n_public_key,
     graphs::{base::get_tx_statuses, peg_in::{PegInDepositorStatus, PegInVerifierStatus}, peg_out::{CommitmentMessageId, PegOutOperatorStatus}},
-    superblock::{find_superblock, get_superblock_message, SuperblockMessage},
     transactions::signing_winternitz::WinternitzSecret,
 };
 
@@ -673,47 +672,41 @@ impl BitVMClient {
 
     pub async fn process_peg_outs(&mut self) {
         let peg_out_graphs = self.get_data().peg_out_graphs.clone();
-        for peg_out_graph in peg_out_graphs.iter() {
-            let status = peg_out_graph.operator_status(&self.esplora).await;
-            match status {
-                PegOutOperatorStatus::PegOutStartTimeAvailable => {
-                    self.broadcast_start_time(peg_out_graph.id()).await
-                }
-                PegOutOperatorStatus::PegOutPegOutConfirmAvailable => {
-                    self
-                        .broadcast_peg_out_confirm(peg_out_graph.id())
-                        .await
-                }
-                PegOutOperatorStatus::PegOutKickOff1Available => {
-                    self.broadcast_kick_off_1(peg_out_graph.id()).await
-                }
-                PegOutOperatorStatus::PegOutKickOff2Available => {
-                    let (sb, sb_hash) = find_superblock();
-                    self
-                        .broadcast_kick_off_2(
+            for peg_out_graph in peg_out_graphs.iter() {
+                let status = peg_out_graph.operator_status(&self.esplora).await;
+                match status {
+                    PegOutOperatorStatus::PegOutStartTimeAvailable => {
+                        self.broadcast_start_time(peg_out_graph.id()).await
+                    }
+                    PegOutOperatorStatus::PegOutPegOutConfirmAvailable => {
+                        self
+                            .broadcast_peg_out_confirm(peg_out_graph.id())
+                            .await
+                    }
+                    PegOutOperatorStatus::PegOutKickOff1Available => {
+                        self.broadcast_kick_off_1(peg_out_graph.id()).await
+                    }
+                    PegOutOperatorStatus::PegOutKickOff2Available => {
+                        self.broadcast_kick_off_2(peg_out_graph.id()).await
+                    }
+                    PegOutOperatorStatus::PegOutAssertAvailable => {
+                        self.broadcast_assert(peg_out_graph.id()).await
+                    }
+                    PegOutOperatorStatus::PegOutTake1Available => {
+                        self.broadcast_take_1(peg_out_graph.id()).await
+                    }
+                    PegOutOperatorStatus::PegOutTake2Available => {
+                        self.broadcast_take_2(peg_out_graph.id()).await
+                    }
+                    _ => {
+                        println!(
+                            "Peg-out graph {} is in status: {}",
                             peg_out_graph.id(),
-                            &get_superblock_message(&sb, &sb_hash),
-                        )
-                        .await
-                }
-                PegOutOperatorStatus::PegOutAssertAvailable => {
-                    self.broadcast_assert(peg_out_graph.id()).await
-                }
-                PegOutOperatorStatus::PegOutTake1Available => {
-                    self.broadcast_take_1(peg_out_graph.id()).await
-                }
-                PegOutOperatorStatus::PegOutTake2Available => {
-                    self.broadcast_take_2(peg_out_graph.id()).await
-                }
-                _ => {
-                    println!(
-                        "Peg-out graph {} is in status: {}",
-                        peg_out_graph.id(),
-                        status
-                    );
+                            status
+                        );
+                    }
                 }
             }
-        }
     }
 
     async fn verifier_status(&self) {
@@ -889,7 +882,10 @@ impl BitVMClient {
                     self.operator_context.as_ref().unwrap(),
                     &self.private_data.commitment_secrets
                         [&self.operator_context.as_ref().unwrap().operator_public_key]
-                        [peg_out_graph_id],
+                        [peg_out_graph_id][&CommitmentMessageId::PegOutTxIdSourceNetwork],
+                    &self.private_data.commitment_secrets
+                        [&self.operator_context.as_ref().unwrap().operator_public_key]
+                        [peg_out_graph_id][&CommitmentMessageId::PegOutTxIdDestinationNetwork],
                 )
                 .await;
         }
@@ -913,7 +909,7 @@ impl BitVMClient {
                     &self.operator_context.as_ref().unwrap(),
                     &self.private_data.commitment_secrets
                         [&self.operator_context.as_ref().unwrap().operator_public_key]
-                        [peg_out_graph_id],
+                        [peg_out_graph_id][&CommitmentMessageId::StartTime],
                 )
                 .await;
         }
@@ -939,11 +935,7 @@ impl BitVMClient {
             .await;
     }
 
-    pub async fn broadcast_kick_off_2(
-        &mut self,
-        peg_out_graph_id: &str,
-        sb_message: &SuperblockMessage,
-    ) {
+    pub async fn broadcast_kick_off_2(&mut self, peg_out_graph_id: &str) {
         let peg_out_graph = self
             .data
             .peg_out_graphs
@@ -960,8 +952,10 @@ impl BitVMClient {
                 &self.operator_context.as_ref().unwrap(),
                 &self.private_data.commitment_secrets
                     [&self.operator_context.as_ref().unwrap().operator_public_key]
-                    [peg_out_graph_id],
-                sb_message,
+                    [peg_out_graph_id][&CommitmentMessageId::Superblock],
+                &self.private_data.commitment_secrets
+                    [&self.operator_context.as_ref().unwrap().operator_public_key]
+                    [peg_out_graph_id][&CommitmentMessageId::SuperblockHash],
             )
             .await;
     }
