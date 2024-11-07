@@ -24,9 +24,12 @@ pub struct KeysCommand {
 }
 
 impl KeysCommand {
-    pub fn new() -> Self {
-        let home_dir = env::var("HOME").expect("Could not find home directory");
-        let bitvm_dir = PathBuf::from(&home_dir).join(".bitvm");
+    pub fn new(key_dir: Option<String>) -> Self {
+        let bitvm_dir = key_dir.map(PathBuf::from).unwrap_or_else(|| {
+            let home_dir = env::var("HOME").expect("Could not find home directory");
+            PathBuf::from(&home_dir).join(".bitvm")
+        });
+
         let config_path = bitvm_dir.join("bitvm-cli-env.toml");
 
         // Create .bitvm directory if it doesn't exist

@@ -17,7 +17,7 @@ pub struct ClientCommand {
 }
 
 impl ClientCommand {
-    pub async fn new(sub_matches: &ArgMatches) -> Self {
+    pub async fn new(sub_matches: &ArgMatches, key_dir: Option<String>) -> Self {
         let (source_network, destination_network) = match sub_matches
             .get_one::<String>("environment")
             .unwrap()
@@ -31,7 +31,7 @@ impl ClientCommand {
             }
         };
 
-        let keys_command = KeysCommand::new();
+        let keys_command = KeysCommand::new(key_dir);
         let config = keys_command.read_config().expect("Failed to read config");
 
         let (_, _, verifier_0_public_key) =
@@ -265,7 +265,8 @@ impl ClientCommand {
             };
 
             if let Some(sub_matches) = matches.subcommand_matches("keys") {
-                let keys_command = KeysCommand::new();
+                let key_dir = matches.get_one::<String>("key-dir").cloned();
+                let keys_command = KeysCommand::new(key_dir);
                 keys_command.handle_command(sub_matches)?;
             } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-address") {
                 self.handle_get_depositor_address().await?;
