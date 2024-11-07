@@ -58,6 +58,35 @@ impl ClientCommand {
         }
     }
 
+    pub fn get_depositor_address_command() -> Command {
+        Command::new("get-depositor-address")
+            .short_flag('d')
+            .about("Get an address spendable by the registered depositor key")
+            .after_help("Get an address spendable by the registered depositor key")
+            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet )").required(false))
+    }
+
+    pub async fn handle_get_depositor_address(&mut self) -> io::Result<()> {
+        let address = self.client.get_depositor_address().to_string();
+        println!("{address}");
+        Ok(())
+    }
+
+    pub fn get_depositor_utxos_command() -> Command {
+        Command::new("get-depositor-utxos")
+            .short_flag('u')
+            .about("Get a list of the depositor's utxos")
+            .after_help("Get a list of the depositor's utxos")
+            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet )").required(false))
+    }
+
+    pub async fn handle_get_depositor_utxos(&mut self) -> io::Result<()> {
+        for utxo in self.client.get_depositor_utxos().await {
+            println!("{}:{} {}", utxo.txid, utxo.vout, utxo.value);
+        }
+        Ok(())
+    }
+
     pub fn get_automatic_command() -> Command {
         Command::new("automatic")
             .short_flag('a')
@@ -190,6 +219,10 @@ impl ClientCommand {
             if let Some(sub_matches) = matches.subcommand_matches("keys") {
                 let keys_command = KeysCommand::new();
                 keys_command.handle_command(sub_matches)?;
+            } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-address") {
+                self.handle_get_depositor_address().await?;
+            } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-utxos") {
+                self.handle_get_depositor_utxos().await?;
             } else if let Some(_sub_matches) = matches.subcommand_matches("status") {
                 self.handle_status_command().await?;
             } else if let Some(sub_matches) = matches.subcommand_matches("broadcast") {

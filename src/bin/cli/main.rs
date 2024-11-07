@@ -10,6 +10,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .subcommand_required(true)
         .arg_required_else_help(true)
         .subcommand(KeysCommand::get_command())
+        .subcommand(ClientCommand::get_depositor_address_command())
+        .subcommand(ClientCommand::get_depositor_utxos_command())
         .subcommand(ClientCommand::get_status_command())
         .subcommand(ClientCommand::get_broadcast_command())
         .subcommand(ClientCommand::get_automatic_command())
@@ -20,6 +22,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     if let Some(sub_matches) = matches.subcommand_matches("keys") {
         let keys_command = KeysCommand::new();
         keys_command.handle_command(sub_matches)?;
+    } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-address") {
+        let mut client_command = ClientCommand::new(sub_matches).await;
+        let _ = client_command.handle_get_depositor_address().await;
+    } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-utxos") {
+        let mut client_command = ClientCommand::new(sub_matches).await;
+        let _ = client_command.handle_get_depositor_utxos().await;
     } else if let Some(sub_matches) = matches.subcommand_matches("status") {
         let mut client_command = ClientCommand::new(sub_matches).await;
         let _ = client_command.handle_status_command().await;

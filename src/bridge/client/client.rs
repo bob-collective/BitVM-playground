@@ -15,14 +15,11 @@ use bitcoin::{
 use esplora_client::{AsyncClient, Builder, TxStatus, Utxo};
 
 use crate::bridge::{
-    constants::DestinationNetwork,
-    contexts::base::generate_n_of_n_public_key,
-    graphs::{
+    constants::DestinationNetwork, contexts::base::generate_n_of_n_public_key, graphs::{
         base::get_tx_statuses,
         peg_in::{PegInDepositorStatus, PegInVerifierStatus},
         peg_out::{CommitmentMessageId, PegOutOperatorStatus},
-    },
-    transactions::signing_winternitz::WinternitzSecret,
+    }, scripts::generate_pay_to_pubkey_script_address, transactions::signing_winternitz::WinternitzSecret
 };
 
 use super::{
@@ -1152,6 +1149,21 @@ impl BitVMClient {
         } else {
             None
         }
+    }
+    
+    pub fn get_depositor_address(&self) -> Address {
+        if let Some(ref context) = self.depositor_context {
+            generate_pay_to_pubkey_script_address(context.network, &context.depositor_public_key)
+        } else {
+            panic!("No depositor key set");
+        }
+    }
+    
+    pub async fn get_depositor_utxos(&self) -> Vec<Utxo> {
+        self.esplora
+            .get_address_utxo(self.get_depositor_address())
+            .await
+            .unwrap()
     }
 
     pub fn push_peg_in_nonces(&mut self, peg_in_graph_id: &str) {
