@@ -481,8 +481,9 @@ impl PegInGraph {
     }
 
     // todo: return txid
-    pub async fn deposit(&self, client: &AsyncClient) {
-        verify_if_not_mined(client, self.peg_in_deposit_transaction.tx().compute_txid()).await;
+    pub async fn deposit(&self, client: &AsyncClient)  -> Txid {
+        let txid = self.peg_in_deposit_transaction.tx().compute_txid();
+        verify_if_not_mined(client, txid).await;
 
         // complete deposit tx
         let deposit_tx = self.peg_in_deposit_transaction.finalize();
@@ -492,10 +493,13 @@ impl PegInGraph {
 
         // verify deposit result
         verify_tx_result(&deposit_result);
+
+        txid
     }
 
-    pub async fn confirm(&self, client: &AsyncClient) {
-        verify_if_not_mined(client, self.peg_in_confirm_transaction.tx().compute_txid()).await;
+    pub async fn confirm(&self, client: &AsyncClient) -> Txid {
+        let txid = self.peg_in_confirm_transaction.tx().compute_txid();
+        verify_if_not_mined(client, txid).await;
 
         let deposit_status = client
             .get_tx_status(&self.peg_in_deposit_transaction.tx().compute_txid())
@@ -510,13 +514,16 @@ impl PegInGraph {
 
             // verify confirm result
             verify_tx_result(&confirm_result);
+
+            txid
         } else {
             panic!("Deposit tx has not been confirmed!");
         }
     }
 
-    pub async fn refund(&self, client: &AsyncClient) {
-        verify_if_not_mined(client, self.peg_in_refund_transaction.tx().compute_txid()).await;
+    pub async fn refund(&self, client: &AsyncClient) -> Txid {
+        let txid = self.peg_in_refund_transaction.tx().compute_txid();
+        verify_if_not_mined(client, txid).await;
 
         let deposit_status = client
             .get_tx_status(&self.peg_in_deposit_transaction.tx().compute_txid())
@@ -531,6 +538,8 @@ impl PegInGraph {
 
             // verify refund result
             verify_tx_result(&refund_result);
+
+            txid
         } else {
             panic!("Deposit tx has not been confirmed!");
         }

@@ -122,7 +122,9 @@ impl ClientCommand {
 
         println!("Create peg-in with ID {peg_in_id}. Broadcasting deposit...");
 
-        self.client.broadcast_peg_in_deposit(&peg_in_id).await;
+        let txid = self.client.broadcast_peg_in_deposit(&peg_in_id).await;
+
+        println!("Broadcasted peg-in deposit with txid {txid}");
 
         Ok(())
     }
@@ -183,9 +185,15 @@ impl ClientCommand {
         let graph_id = subcommand.unwrap().1.get_one::<String>("graph_id").unwrap();
 
         match subcommand.unwrap().1.subcommand() {
-            Some(("deposit", _)) => self.client.broadcast_peg_in_deposit(graph_id).await,
-            Some(("refund", _)) => self.client.broadcast_peg_in_refund(graph_id).await,
-            Some(("confirm", _)) => self.client.broadcast_peg_in_confirm(graph_id).await,
+            Some(("deposit", _)) => {
+                self.client.broadcast_peg_in_deposit(graph_id).await;
+            }
+            Some(("refund", _)) => {
+                self.client.broadcast_peg_in_refund(graph_id).await;
+            }
+            Some(("confirm", _)) => {
+                self.client.broadcast_peg_in_confirm(graph_id).await;
+            }
             Some(("peg_out_confirm", _)) => self.client.broadcast_peg_out_confirm(graph_id).await,
             Some(("kick_off_1", _)) => self.client.broadcast_kick_off_1(graph_id).await,
             Some(("kick_off_2", _)) => self.client.broadcast_kick_off_2(graph_id).await,

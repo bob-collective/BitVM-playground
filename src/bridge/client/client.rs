@@ -624,10 +624,10 @@ impl BitVMClient {
 
             match status {
                 PegInDepositorStatus::PegInDepositWait => {
-                    self.broadcast_peg_in_deposit(peg_in_graph.id()).await
+                    self.broadcast_peg_in_deposit(peg_in_graph.id()).await;
                 }
                 PegInDepositorStatus::PegInConfirmWait => {
-                    self.broadcast_peg_in_confirm(peg_in_graph.id()).await
+                    self.broadcast_peg_in_confirm(peg_in_graph.id()).await;
                 }
                 _ => {
                     println!(
@@ -657,7 +657,7 @@ impl BitVMClient {
                 }
                 PegInVerifierStatus::ReadyToSubmit => {
                     println!("Broadcasting peg-in confirm");
-                    self.broadcast_peg_in_confirm(&peg_in_graph.id()).await
+                    self.broadcast_peg_in_confirm(&peg_in_graph.id()).await;
                 }
                 _ => {
                     // nothing to do
@@ -747,7 +747,7 @@ impl BitVMClient {
         peg_in_graph_id
     }
 
-    pub async fn broadcast_peg_in_deposit(&mut self, peg_in_graph_id: &str) {
+    pub async fn broadcast_peg_in_deposit(&mut self, peg_in_graph_id: &str) -> Txid {
         let peg_in_graph = self
             .data
             .peg_in_graphs
@@ -760,7 +760,7 @@ impl BitVMClient {
         peg_in_graph.unwrap().deposit(&self.esplora).await
     }
 
-    pub async fn broadcast_peg_in_refund(&mut self, peg_in_graph_id: &str) {
+    pub async fn broadcast_peg_in_refund(&mut self, peg_in_graph_id: &str) -> Txid {
         let peg_in_graph = self
             .data
             .peg_in_graphs
@@ -773,7 +773,7 @@ impl BitVMClient {
         peg_in_graph.unwrap().refund(&self.esplora).await
     }
 
-    pub async fn broadcast_peg_in_confirm(&mut self, peg_in_graph_id: &str) {
+    pub async fn broadcast_peg_in_confirm(&mut self, peg_in_graph_id: &str) -> Txid {
         let peg_in_graph = self
             .data
             .peg_in_graphs
