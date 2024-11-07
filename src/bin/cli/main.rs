@@ -12,6 +12,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .subcommand(KeysCommand::get_command())
         .subcommand(ClientCommand::get_depositor_address_command())
         .subcommand(ClientCommand::get_depositor_utxos_command())
+        .subcommand(ClientCommand::get_initiate_peg_in_command())
         .subcommand(ClientCommand::get_status_command())
         .subcommand(ClientCommand::get_broadcast_command())
         .subcommand(ClientCommand::get_automatic_command())
@@ -28,6 +29,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-utxos") {
         let mut client_command = ClientCommand::new(sub_matches).await;
         let _ = client_command.handle_get_depositor_utxos().await;
+    } else if let Some(sub_matches) = matches.subcommand_matches("initiate-peg-in") {
+        let mut client_command = ClientCommand::new(sub_matches).await;
+        let _ = client_command.handle_initiate_peg_in_command(sub_matches).await;
     } else if let Some(sub_matches) = matches.subcommand_matches("status") {
         let mut client_command = ClientCommand::new(sub_matches).await;
         let _ = client_command.handle_status_command().await;

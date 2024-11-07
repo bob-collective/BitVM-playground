@@ -3,11 +3,13 @@ use crate::bridge::client::client::BitVMClient;
 use crate::bridge::constants::DestinationNetwork;
 use crate::bridge::contexts::base::generate_keys_from_secret;
 use crate::bridge::graphs::base::{VERIFIER_0_SECRET, VERIFIER_1_SECRET};
-use bitcoin::Network;
+use crate::bridge::transactions::base::Input;
 use bitcoin::PublicKey;
+use bitcoin::{Network, OutPoint};
 use clap::{arg, ArgMatches, Command};
 use colored::Colorize;
 use std::io::{self, Write};
+use std::str::FromStr;
 use tokio::io::{AsyncBufReadExt, BufReader};
 
 pub struct ClientCommand {
@@ -84,6 +86,44 @@ impl ClientCommand {
         for utxo in self.client.get_depositor_utxos().await {
             println!("{}:{} {}", utxo.txid, utxo.vout, utxo.value);
         }
+        Ok(())
+    }
+
+    pub fn get_initiate_peg_in_command() -> Command {
+        Command::new("initiate-peg-in")
+        .short_flag('p')
+        .about("Initiate a peg-in")
+        .after_help("Initiate a peg-in by creating a peg-in graph")
+        .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet)")
+            .required(false).default_value("mainnet"))
+        .arg(arg!(-u --utxo <UTXO> "Specify the uxo to spend from. Format: <TXID>:<VOUT>")
+        .required(true))
+        .arg(arg!(-d --destination_address <EVM_ADDRESS> "The evm-address to send the wrapped bitcoin to")
+            .required(true))
+    }
+
+    pub async fn handle_initiate_peg_in_command(
+        &mut self,
+        sub_matches: &ArgMatches,
+    ) -> io::Result<()> {
+        let utxo = sub_matches.get_one::<String>("utxo").unwrap();
+        let evm_address = sub_matches
+            .get_one::<String>("destination_address")
+            .unwrap();
+        let outpoint = OutPoint::from_str(utxo).unwrap();
+
+        let tx = self.client.esplora.get_tx(&outpoint.txid).await.unwrap();
+        let tx = tx.unwrap();
+        let input = Input {
+            outpoint,
+            amount: tx.output[outpoint.vout as usize].value,
+        };
+        let peg_in_id = self.client.create_peg_in_graph(input, &evm_address).await;
+
+        println!("Create peg-in with ID {peg_in_id}. Broadcasting deposit...");
+
+        self.client.broadcast_peg_in_deposit(&peg_in_id).await;
+
         Ok(())
     }
 
@@ -223,6 +263,8 @@ impl ClientCommand {
                 self.handle_get_depositor_address().await?;
             } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-utxos") {
                 self.handle_get_depositor_utxos().await?;
+            } else if let Some(sub_matches) = matches.subcommand_matches("initiate-peg-in") {
+                self.handle_initiate_peg_in_command(sub_matches).await?;
             } else if let Some(_sub_matches) = matches.subcommand_matches("status") {
                 self.handle_status_command().await?;
             } else if let Some(sub_matches) = matches.subcommand_matches("broadcast") {

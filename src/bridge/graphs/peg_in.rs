@@ -480,6 +480,7 @@ impl PegInGraph {
         )
     }
 
+    // todo: return txid
     pub async fn deposit(&self, client: &AsyncClient) {
         verify_if_not_mined(client, self.peg_in_deposit_transaction.tx().compute_txid()).await;
 
