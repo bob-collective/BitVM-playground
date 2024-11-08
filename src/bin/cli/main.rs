@@ -1,7 +1,7 @@
 use bitcoin::PublicKey;
 use bitvm::bridge::client::cli::client_command::{ClientCommand, CommonArgs};
 use bitvm::bridge::client::cli::key_command::KeysCommand;
-use clap::{arg, command, value_parser};
+use clap::{arg, command};
 use std::error::Error;
 
 #[tokio::main]

@@ -273,19 +273,19 @@ impl ClientCommand {
                 let key_dir = matches.get_one::<String>("key-dir").cloned();
                 let keys_command = KeysCommand::new(key_dir);
                 keys_command.handle_command(sub_matches)?;
-            } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-address") {
+            } else if matches.subcommand_matches("get-depositor-address").is_some() {
                 self.handle_get_depositor_address().await?;
-            } else if let Some(sub_matches) = matches.subcommand_matches("get-depositor-utxos") {
+            } else if matches.subcommand_matches("get-depositor-utxos").is_some() {
                 self.handle_get_depositor_utxos().await?;
             } else if let Some(sub_matches) = matches.subcommand_matches("initiate-peg-in") {
                 self.handle_initiate_peg_in_command(sub_matches).await?;
-            } else if let Some(_sub_matches) = matches.subcommand_matches("status") {
+            } else if matches.subcommand_matches("status").is_some() {
                 self.handle_status_command().await?;
             } else if let Some(sub_matches) = matches.subcommand_matches("broadcast") {
                 self.handle_broadcast_command(sub_matches).await?;
-            } else if let Some(_sub_matches) = matches.subcommand_matches("automatic") {
+            } else if matches.subcommand_matches("automatic").is_some(){
                 self.handle_automatic_command().await?;
-            } else if let Some(_sub_matches) = matches.subcommand_matches("interactive") {
+            } else if matches.subcommand_matches("interactive").is_some() {
                 println!("{}", "Already in interactive mode.".yellow());
             } else {
                 println!(
