@@ -717,6 +717,11 @@ impl BitVMClient {
             panic!("Verifier context must be initialized");
         }
 
+        for peg_in_graph in self.data.peg_in_graphs.iter() {
+            let status = peg_in_graph.verifier_status(&self.esplora, self.verifier_context.as_ref()).await;
+            println!("Graph id: {} status: {}\n", peg_in_graph.id(), status);
+        }
+
         for peg_out_graph in self.data.peg_out_graphs.iter() {
             let status = peg_out_graph.verifier_status(&self.esplora).await;
             println!("Graph id: {} status: {}\n", peg_out_graph.id(), status);
