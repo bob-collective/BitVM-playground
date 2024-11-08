@@ -28,9 +28,9 @@ impl DataStore {
     pub fn new() -> Self {
         Self {
             aws_s3: AwsS3::new(),
-            ftp: None,  // Ftp::new(),
-            ftps: None, // Ftps::new(),
-            sftp: None, // Sftp::new(),
+            ftp: Ftp::new(),
+            ftps: Ftps::new(),
+            sftp: Sftp::new(),
         }
     }
 
