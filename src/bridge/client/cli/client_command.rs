@@ -12,36 +12,41 @@ use std::io::{self, Write};
 use std::str::FromStr;
 use tokio::io::{AsyncBufReadExt, BufReader};
 
+pub struct CommonArgs {
+    pub key_dir: Option<String>,
+    pub verifiers: Option<Vec<PublicKey>>,
+    pub environment: Option<String>,
+}
+
+
 pub struct ClientCommand {
     client: BitVMClient,
 }
 
 impl ClientCommand {
-    pub async fn new(sub_matches: &ArgMatches, key_dir: Option<String>) -> Self {
-        let (source_network, destination_network) = match sub_matches
-            .get_one::<String>("environment")
-            .unwrap()
-            .as_str()
+    pub async fn new(
+        common_args: CommonArgs,
+    ) -> Self {
+        let (source_network, destination_network) = match common_args.environment.as_deref()
         {
-            "mainnet" => (Network::Bitcoin, DestinationNetwork::Ethereum),
-            "testnet" => (Network::Testnet, DestinationNetwork::EthereumSepolia),
+            Some("mainnet") => (Network::Bitcoin, DestinationNetwork::Ethereum),
+            Some("testnet") => (Network::Testnet, DestinationNetwork::EthereumSepolia),
             _ => {
                 eprintln!("Invalid environment. Use mainnet, testnet.");
                 std::process::exit(1);
             }
         };
 
-        let keys_command = KeysCommand::new(key_dir);
+        let keys_command = KeysCommand::new(common_args.key_dir);
         let config = keys_command.read_config().expect("Failed to read config");
 
-        let (_, _, verifier_0_public_key) =
-            generate_keys_from_secret(Network::Bitcoin, VERIFIER_0_SECRET);
-        let (_, _, verifier_1_public_key) =
-            generate_keys_from_secret(Network::Bitcoin, VERIFIER_1_SECRET);
-
-        let mut n_of_n_public_keys: Vec<PublicKey> = Vec::new();
-        n_of_n_public_keys.push(verifier_0_public_key);
-        n_of_n_public_keys.push(verifier_1_public_key);
+        let n_of_n_public_keys = common_args.verifiers.unwrap_or_else(|| {
+            let (_, _, verifier_0_public_key) =
+                generate_keys_from_secret(Network::Bitcoin, VERIFIER_0_SECRET);
+            let (_, _, verifier_1_public_key) =
+                generate_keys_from_secret(Network::Bitcoin, VERIFIER_1_SECRET);
+            vec![verifier_0_public_key, verifier_1_public_key]
+        });
 
         let bitvm_client = BitVMClient::new(
             source_network,
@@ -65,7 +70,6 @@ impl ClientCommand {
             .short_flag('d')
             .about("Get an address spendable by the registered depositor key")
             .after_help("Get an address spendable by the registered depositor key")
-            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet )").required(false))
     }
 
     pub async fn handle_get_depositor_address(&mut self) -> io::Result<()> {
@@ -79,7 +83,6 @@ impl ClientCommand {
             .short_flag('u')
             .about("Get a list of the depositor's utxos")
             .after_help("Get a list of the depositor's utxos")
-            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet )").required(false))
     }
 
     pub async fn handle_get_depositor_utxos(&mut self) -> io::Result<()> {
@@ -94,8 +97,6 @@ impl ClientCommand {
         .short_flag('p')
         .about("Initiate a peg-in")
         .after_help("Initiate a peg-in by creating a peg-in graph")
-        .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet)")
-            .required(false).default_value("mainnet"))
         .arg(arg!(-u --utxo <UTXO> "Specify the uxo to spend from. Format: <TXID>:<VOUT>")
         .required(true))
         .arg(arg!(-d --destination_address <EVM_ADDRESS> "The evm-address to send the wrapped bitcoin to")
@@ -133,8 +134,6 @@ impl ClientCommand {
         Command::new("automatic")
             .short_flag('a')
             .about("Automatic mode: Poll for status updates and sign or broadcast transactions")
-            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet )").required(false)
-        .default_value("mainnet"))
     }
 
     pub async fn handle_automatic_command(&mut self) -> io::Result<()> {
@@ -152,9 +151,7 @@ impl ClientCommand {
         Command::new("broadcast")
             .short_flag('b')
             .about("Broadcast transactions")
-            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet)")
-                .required(false).default_value("mainnet"))
-            .after_help("Broadcast transactions. The environment flag is optional and defaults to mainnet if not specified.")
+            .after_help("Broadcast transactions.")
             .subcommand(
                 Command::new("pegin")
                     .about("Broadcast peg-in transactions")
@@ -211,9 +208,7 @@ impl ClientCommand {
         Command::new("status")
         .short_flag('s')
         .about("Show the status of the BitVM client")
-        .after_help("Get the status of the BitVM client. The environment flag is optional and defaults to mainnet if not specified.")
-        .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet)")
-        .required(false).default_value("mainnet"))
+        .after_help("Get the status of the BitVM client.")
     }
 
     pub async fn handle_status_command(&mut self) -> io::Result<()> {
@@ -226,7 +221,6 @@ impl ClientCommand {
         Command::new("interactive")
             .short_flag('i')
             .about("Interactive mode for manually issuing commands")
-            .arg(arg!(-e --environment <ENVIRONMENT> "Specify the Bitcoin network environment (mainnet, testnet)").required(false).default_value("mainnet"))
     }
 
     pub async fn handle_interactive_command(&mut self, main_command: &Command) -> io::Result<()> {
