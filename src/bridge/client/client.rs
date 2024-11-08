@@ -236,8 +236,6 @@ impl BitVMClient {
 
                     self.merge_data(latest_file.unwrap()); // merge the latest data at the end
                 }
-            } else {
-                println!("Up to date. No need to read data from the server.");
             }
         } else {
             println!("Error: {}", latest_file_names_result.unwrap_err());
@@ -648,11 +646,11 @@ impl BitVMClient {
 
             match status {
                 PegInVerifierStatus::PendingOurNonces => {
-                    println!("Pusing nonce");
+                    println!("Pushing nonce");
                     self.push_peg_in_nonces(&peg_in_graph.id());
                 }
                 PegInVerifierStatus::PendingOurSignature => {
-                    println!("Pusing signature");
+                    println!("Pushing signature");
                     self.pre_sign_peg_in(&peg_in_graph.id());
                 }
                 PegInVerifierStatus::ReadyToSubmit => {

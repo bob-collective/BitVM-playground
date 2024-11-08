@@ -8,8 +8,10 @@ use bitcoin::PublicKey;
 use bitcoin::{Network, OutPoint};
 use clap::{arg, ArgMatches, Command};
 use colored::Colorize;
+use tokio::time::sleep;
 use std::io::{self, Write};
 use std::str::FromStr;
+use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, BufReader};
 
 pub struct CommonArgs {
@@ -142,10 +144,17 @@ impl ClientCommand {
         loop {
             self.client.sync().await;
 
+            let old_data = self.client.get_data().clone();
+
             self.client.process_peg_ins().await;
             self.client.process_peg_outs().await;
 
-            self.client.flush().await;
+            // A bit inefficient, but fine for now: only flush if data changed
+            if self.client.get_data() != &old_data {
+                self.client.flush().await;
+            } else {
+                sleep(Duration::from_millis(250)).await;
+            }
         }
     }
 
