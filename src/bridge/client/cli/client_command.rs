@@ -121,7 +121,9 @@ impl ClientCommand {
         };
         let peg_in_id = self.client.create_peg_in_graph(input, &evm_address).await;
 
-        println!("Create peg-in with ID {peg_in_id}. Broadcasting deposit...");
+        self.client.flush().await;
+
+        println!("Created peg-in with ID {peg_in_id}. Broadcasting deposit...");
 
         let txid = self.client.broadcast_peg_in_deposit(&peg_in_id).await;
 
